@@ -1,0 +1,128 @@
+\documentclass{article}
+
+\begin{document}
+
+\section*{Derivations}
+
+\begin{itemize}
+    \item Derivation 1
+    \begin{align*}
+        \rho(\mathbb{\text{E}}[Y|X], h(x))\sqrt{\frac{\text{Var}[\mathbb{\text{E}}[Y|X]]}{\text{Var}[Y]}} &= \frac{\text{Cov}[\mathbb{\text{E}}[Y|X], h(x)]}{\sqrt{\text{Var}[\mathbb{\text{E}}[Y|X]]\text{Var}[Y]}}\sqrt{\frac{\text{Var}[\mathbb{\text{E}}[Y|X]]}{\text{Var}[Y]}}\\
+        &= \frac{\text{Cov}[\mathbb{\text{E}}[Y|X], h(x)]}{\sqrt{\text{Var}[Y]\text{Var}[h(x)]}} \\
+        &= \frac{\mathbb{\text{E}}[\mathbb{\text{E}}[Y|X]h(x)] - \mathbb{\text{E}}[\mathbb{\text{E}}[Y|X]]\mathbb{\text{E}}[\mathbb{\text{E}}[h(x)]]}{\sqrt{\text{Var}[Y]\text{Var}[h(x)]}} \\
+        &= \frac{\mathbb{\text{E}}[\mathbb{\text{E}}[Y*h(x)|X]] - \mathbb{\text{E}}[\mathbb{\text{E}}[Y|X]]\mathbb{\text{E}}[\mathbb{\text{E}}[h(x)]]}{\sqrt{\text{Var}[Y]\text{Var}[h(x)]}} \\
+        &= \text{/law of total expectation/} \\
+        &= \frac{\mathbb{\text{E}}[Y*h(x)] - \mathbb{\text{E}}[Y]\mathbb{\text{E}}[h(x)]}{\sqrt{\text{Var}[Y]\text{Var}[h(x)]}} \\
+        &= \frac{\text{Cov}[Y, h(x)]}{\sqrt{\text{Var}[Y]\text{Var}[h(x)]}} \\
+        &= \rho(Y, h(x))
+    \end{align*}
+    \item Derivation 2
+    \begin{align*}
+        \rho(Y, \alpha + \beta \mathbb{\text{E}}[Y|X]) &= \frac{\text{Cov}[Y, \alpha + \beta \mathbb{\text{E}}[Y|X]]}{\sqrt{\text{Var}[\mathbb{\text{E}}[Y|X]]\text{Var}[Y]}}\sqrt{\frac{\text{Var}[\mathbb{\text{E}}[Y|X]]}{\text{Var}[Y]}}\\
+        &= \frac{\mathbb{\text{E}}[Y(\alpha + \beta \mathbb{\text{E}}[Y|X])] - \mathbb{\text{E}}[Y]\mathbb{\text{E}}[\alpha + \beta \mathbb{\text{E}}[Y|X]]}{\beta\sqrt{\text{Var}[Y]\text{Var}[\mathbb{\text{E}}[Y|X]]}}\\
+        &= \frac{\mathbb{\text{E}}[Y * \mathbb{\text{E}}[Y|X]] + \mathbb{\text{E}}[Y]\mathbb{\text{E}}[\mathbb{\text{E}}[Y|X]]}{\sqrt{\text{Var}[Y]\text{Var}[\mathbb{\text{E}}[Y|X]]}}\\
+        &= \frac{\text{Cov}[Y, \mathbb{\text{E}}[Y|X]]}{\sqrt{\text{Var}[Y]\text{Var}[\mathbb{\text{E}}[Y|X]]}}\\
+        &= \rho(Y, \mathbb{\text{E}}[Y|X])\\ 
+    \end{align*}
+    \item Derivation 3
+    \begin{align*}
+        \rho_c(V, W) &= 1 - \frac{\mathbb{\text{E}}[(V - W)^2]}{\text{Var}[V] + \text{Var}[W] + (\mathbb{\text{E}}[V] - \mathbb{\text{E}}[W])^2}\\
+        &= \frac{\text{Var}[V] + \text{Var}[W] + (\mathbb{\text{E}}[V] - \mathbb{\text{E}}[W])^2 - \mathbb{\text{E}}[(V - W)^2]}{\text{Var}[V] + \text{Var}[W] + (\mathbb{\text{E}}[V] - \mathbb{\text{E}}[W])^2}\\
+        &= \frac{2(\mathbb{\text{E}}[VW] - \mathbb{\text{E}}[V]\mathbb{\text{E}}[W])}{\text{Var}[V] + \text{Var}[W] + (\mathbb{\text{E}}[V] - \mathbb{\text{E}}[W])^2} \\
+        &= \frac{2\text{Cov}[V, W]}{\text{Var}[V] + \text{Var}[W] + (\mathbb{\text{E}}[V] - \mathbb{\text{E}}[W])^2}\\
+        &= \frac{2\rho(V, W)\sqrt{\text{Var}[V]\text{Var}[W]}}{\text{Var}[V] + \text{Var}[W] + (\mathbb{\text{E}}[V] - \mathbb{\text{E}}[W])^2}
+    \end{align*}
+    \item Derivation 4
+    \begin{align*}
+    h^{\star}(x) &= \beta_0 + \beta_1 x \\[4pt]
+    \text{Minimise } &\ \mathbb{\text{E}}\left[(Y-(\beta_0+\beta_1 X))^2\right]
+    \end{align*}
+    
+    \begin{align*}
+        \frac{\partial}{\partial \beta_0}\mathbb{\text{E}}\left[(Y-(\beta_0+\beta_1 X))^2\right] &= 0 \\
+        \mathbb{\text{E}}\left[\frac{\partial}{\partial \beta_0}(Y-(\beta_0+\beta_1 X))^2\right] &= 0 \\
+        \mathbb{\text{E}}\left[-2(Y-(\beta_0+\beta_1 X))\right] &= 0 \\
+        \mathbb{\text{E}}[Y-\beta_0-\beta_1 X] &= 0 \\
+        \mathbb{\text{E}}[Y] - \beta_0 - \beta_1\,\mathbb{\text{E}}[X] &= 0 \\
+        \mathbb{\text{E}}[Y] - \beta_1\,\mathbb{\text{E}}[X] &= \beta_0
+    \end{align*}
+    
+    \begin{align*}
+        \frac{\partial}{\partial \beta_1}\mathbb{\text{E}}\left[(Y-(\beta_0+\beta_1 X))^2\right] &= 0 \\
+        \mathbb{\text{E}}\left[\frac{\partial}{\partial \beta_1}\left(Y-\mathbb{\text{E}}[Y]-\beta_1(X-\mathbb{\text{E}}[X])\right)^2\right] &= 0 \\
+        \mathbb{\text{E}}\left[-2(X-\mathbb{\text{E}}[X])\left(Y-\mathbb{\text{E}}[Y]-\beta_1(X-\mathbb{\text{E}}[X])\right)\right] &= 0 \\
+        \mathbb{\text{E}}\left[(X-\mathbb{\text{E}}[X])(Y-\mathbb{\text{E}}[Y])\right] - \beta_1\,\mathbb{\text{E}}\left[(X-\mathbb{\text{E}}[X])^2\right] &= 0 \\
+        \mathbb{\text{E}}[XY] - \mathbb{\text{E}}[X]\mathbb{\text{E}}[Y] - \beta_1\,\text{Var}[X] &= 0 \\
+        \text{Cov}[Y,X] - \beta_1\,\text{Var}[X] &= 0 \\
+        \beta_1 &= \frac{\text{Cov}[Y,X]}{\text{Var}[X]}
+    \end{align*}
+    
+    \begin{align*}
+        \Rightarrow\ h^{\star}(x_0) = \left(\mathbb{\text{E}}[Y] - \frac{\text{Cov}[Y,X]}{\text{Var}[X]}\,\mathbb{\text{E}}[X]\right) + \frac{\text{Cov}[Y,X]}{\text{Var}[X]}\,x_0
+    \end{align*}
+
+    \item Derivation 5
+    \begin{align*}
+        \sqrt{\frac{\text{Var}[\text{E}[Y|X]]}{\text{Var}[Y]}}
+        &= \text{/ }\text{E}[Y|X] = \beta_0 + \beta_1 X \text{ / } \\
+        &= \sqrt{\frac{\text{Var}[\beta_0+\beta_1 X]}{\text{Var}[Y]}} \\
+        &= \beta_1\sqrt{\frac{\text{Var}[X]}{\text{Var}[Y]}}
+    \end{align*}
+    
+    \[
+    \Longrightarrow \quad \beta_1\sqrt{\frac{\text{Var}[X]}{\text{Var}[Y]}} \;=\; \frac{\text{Cov}(Y,X)}{\sqrt{\text{Var}[Y]\text{Var}[X]}}
+    \]
+    
+    \begin{align*}
+        \frac{\text{Cov}(Y,X)}{\sqrt{\text{Var}[Y]\text{Var}[X]}}
+        &= \frac{\text{E}[YX] - \text{E}[Y]\text{E}[X]}{\sqrt{\text{Var}[Y]\text{Var}[X]}} \\
+        &= \text{/ law of total expectation /} \\
+        &= \frac{\text{E}[\text{E}(YX\mid X)] - \text{E}[\text{E}[Y|X]]\text{E}[X]}{\sqrt{\text{Var}[Y]\text{Var}[X]}} \\
+        &= \frac{\text{E}[X\,\text{E}[Y|X]] - \text{E}[\text{E}[Y|X]]\text{E}[X]}{\sqrt{\text{Var}[Y]\text{Var}[X]}} \\
+        &= \text{/ } \text{E}[Y|X] = \beta_0+\beta_1 X\text{ /} \\
+        &= \frac{\text{E}[X(\beta_0+\beta_1 X)] - \text{E}[\beta_0+\beta_1 X]\,\text{E}[X]}{\sqrt{\text{Var}[Y]\text{Var}[X]}} \\
+        &= \frac{\text{E}[\beta_0 X + \beta_1 X^2] - (\beta_0+\beta_1 \text{E}[X])\text{E}[X]}{\sqrt{\text{Var}[Y]\text{Var}[X]}} \\
+        &= \frac{\beta_0 \text{E}[X] + \beta_1 \text{E}[X^2] - \beta_0 \text{E}[X] - \beta_1 \text{E}[X]^2}{\sqrt{\text{Var}[Y]\text{Var}[X]}} \\
+        &= \frac{\beta_1 \text{E}[X^2] - \beta_1 \text{E}[X]^2}{\sqrt{\text{Var}[Y]\text{Var}[X]}} \\
+        &= \frac{\beta_1\big(\text{E}[X^2]-\text{E}[X]^2\big)}{\sqrt{\text{Var}[Y]\text{Var}[X]}} \\
+        &= \frac{\beta_1\,\text{Var}[X]}{\sqrt{\text{Var}[Y]\text{Var}[X]}} \\
+        &= \beta_1\sqrt{\frac{\text{Var}[X]}{\text{Var}[Y]}}
+    \end{align*}
+    
+    \item Derivation 6
+    \begin{align*}
+        h^{\star\star}(X) &= \beta_0 + \beta_1 X \\[4pt]
+        \text{Maximise } \rho_c(Y,\beta_0+\beta_1 X) &= \frac{2\,\text{Cov}[Y,\beta_0+\beta_1 X]}{\text{Var}[Y]\,\text{Var}[\beta_0+\beta_1 X] + \left(\mathbb{\text{E}}[Y]-\mathbb{\text{E}}[\beta_0+\beta_1 X]\right)^2}
+    \end{align*}
+    
+    \begin{align*}
+        \frac{\partial}{\partial \beta_0}\left(\frac{2\,\text{Cov}[Y,\beta_0+\beta_1 X]}{\text{Var}[Y]\,\text{Var}[\beta_0+\beta_1 X] + \left(\mathbb{\text{E}}[Y]-\mathbb{\text{E}}[\beta_0+\beta_1 X]\right)^2}\right) &= 0 \\[6pt]
+        \frac{\partial}{\partial \beta_0}\left(\frac{2\beta_1\,\text{Cov}[Y,X]}{\text{Var}[Y]\,\beta_1^2\text{Var}[X] + \left(\mathbb{\text{E}}[Y]-\beta_0-\beta_1\mathbb{\text{E}}[X]\right)^2}\right) &= 0 \\[6pt]
+        \frac{2\beta_1\,\text{Cov}[Y,X]\left[\dfrac{\partial}{\partial \beta_0}\left(\text{Var}[Y]\beta_1^2\text{Var}[X] + \left(\mathbb{\text{E}}[Y]-\beta_0-\beta_1\mathbb{\text{E}}[X]\right)^2\right)\right]}{\left(\text{Var}[Y]\beta_1^2\text{Var}[X] + \left(\mathbb{\text{E}}[Y]-\beta_0-\beta_1\mathbb{\text{E}}[X]\right)^2\right)^2} &= 0 \\[10pt]
+        \Rightarrow\ 2\beta_1\,\text{Cov}[Y,X]\left(-2\left(\mathbb{\text{E}}[Y]-\beta_0-\beta_1\mathbb{\text{E}}[X]\right)\right) &= 0 \\
+        \Rightarrow\ \mathbb{\text{E}}[Y] - \beta_0 - \beta_1\mathbb{\text{E}}[X] &= 0 \\
+        \Rightarrow\ \beta_0 &= \mathbb{\text{E}}[Y] - \beta_1\mathbb{\text{E}}[X]
+    \end{align*}
+    
+    \begin{align*}
+        \frac{\partial}{\partial \beta_1}\left(\frac{2\,\text{Cov}[Y,\beta_0+\beta_1 X]}{\text{Var}[Y]\,\text{Var}[\beta_0+\beta_1 X] + \left(\mathbb{\text{E}}[Y]-\mathbb{\text{E}}[\beta_0+\beta_1 X]\right)^2}\right) &= 0 \\[6pt]
+        \frac{\partial}{\partial \beta_1}\left(\frac{2\beta_1\,\text{Cov}[Y,X]}{\text{Var}[Y] + \beta_1^2\text{Var}[X] + \left(\mathbb{\text{E}}[Y]-\beta_0-\beta_1\mathbb{\text{E}}[X]\right)^2}\right) &= 0 \quad \Leftrightarrow\ \text{insert } \beta_0 = \mathbb{\text{E}}[Y]-\beta_1\mathbb{\text{E}}[X] \\[6pt]
+        \frac{\partial}{\partial \beta_1}\left(\frac{2\beta_1\,\text{Cov}[Y,X]}{\text{Var}[Y] + \beta_1^2\text{Var}[X] + \left(\mathbb{\text{E}}[Y]-\mathbb{\text{E}}[Y]+\beta_1\mathbb{\text{E}}[X]-\beta_1\mathbb{\text{E}}[X]\right)^2}\right) &= 0 \\[6pt]
+        \frac{\partial}{\partial \beta_1}\left(\frac{2\beta_1\,\text{Cov}[Y,X]}{\text{Var}[Y] + \beta_1^2\text{Var}[X]}\right) &= 0 \\[10pt]
+        \frac{2\,\text{Cov}[Y,X]\left(\text{Var}[Y]+\beta_1^2\text{Var}[X]\right) - 2\beta_1\,\text{Cov}[Y,X]\left(2\beta_1\text{Var}[X]\right)}{\left(\text{Var}[Y]+\beta_1^2\text{Var}[X]\right)^2} &= 0 \\[10pt]
+        \Rightarrow\ 2\,\text{Cov}[Y,X]\,\text{Var}[Y] + 2\beta_1^2\text{Cov}[Y,X]\,\text{Var}[X] - 4\beta_1^2\text{Cov}[Y,X]\,\text{Var}[X] &= 0 \\
+        \Rightarrow\ 2\,\text{Cov}[Y,X]\,\text{Var}[Y] - 2\beta_1^2\text{Cov}[Y,X]\,\text{Var}[X] &= 0 \\
+        \Rightarrow\ \text{Var}[Y] - \beta_1^2\text{Var}[X] &= 0 \\
+        \Rightarrow\ \beta_1^2 &= \frac{\text{Var}[Y]}{\text{Var}[X]} \\
+        \Rightarrow\ \beta_1 &= \pm\sqrt{\frac{\text{Var}[Y]}{\text{Var}[X]}} \quad \leftarrow \text{Must be positive} 
+    \end{align*}
+    
+    \begin{align*}
+        \Rightarrow\ h^{\star\star}(x_0) = \left(\mathbb{\text{E}}[Y] - \sqrt{\frac{\text{Var}[Y]}{\text{Var}[X]}}\,\mathbb{\text{E}}[X]\right) + \sqrt{\frac{\text{Var}[Y]}{\text{Var}[X]}}\,x_0 = \left(\mathbb{\text{E}}[Y] - \frac{1}{\gamma}\frac{\text{Cov}[Y,X]}{\text{Var}[X]}\,\mathbb{\text{E}}[X]\right) + \frac{1}{\gamma}\frac{\text{Cov}[Y,X]}{\text{Var}[X]}\,x_0
+    \end{align*}
+
+    
+
+\end{itemize}   
+
+\end{document}
