@@ -1,6 +1,5 @@
 library(MASS)
 library(sn)
-setwd('/Users/Hugo/Desktop/MALP-project-summer-2026/MALR project 2026/Writeup')
 
 get_mean_vector <- function(y, x){ #takes two variables, y, and x, and creates a mean vector mew = [mew_y, mew_x]
   y_mean <- mean(y)
@@ -254,39 +253,6 @@ generate_error <- function(y, x, predictor){
   return(squared_error)
 }
 
-generate_sample_skewed <- function(n, means, cm, rho = NULL, skew){
-  if (is.null(rho)){
-    sigma <- rbind(cbind(cm$s_yy, cm$s_yx), cbind(cm$s_xy, cm$s_xx))
-  
-  }else{
-    rho_dir <- as.numeric(cm$s_yx) / (sqrt(cm$s_yy) * sqrt(diag(cm$s_xx)))
-    corm_x <- cov2cor(cm$s_xx)
-    
-    targetR2 <- 1 - (1 - rho ** 2) * (n - 1) / (n - (length(means) - 1) - 1)
-    
-    if (targetR2 <= 0 || targetR2 >= 1) {
-      stop("Requested R2 is not achievable for this n and number of predictors.")
-    }
-    
-    unscaledR2 <- as.numeric(t(rho_dir) %*% solve(corm_x) %*% rho_dir)
-    rho_yx <- sqrt(targetR2 / unscaledR2) * rho_dir
-    
-    corm <- rbind(cbind(1, matrix(rho_yx, nrow = 1)), cbind(rho_yx, corm_x))
-    sds <- c(sqrt(cm$s_yy), sqrt(diag(cm$s_xx))) 
-    sigma <- diag(sds) %*% corm %*% diag(sds)
-    
-  }
-
-  sv <- c(0, rep(skew, length(means) - 1))
-  sigma <- round(sigma, 10)
-
-  data <- rmsn(n, means, sigma, sv)
-  data_y <- data[, 1]
-  data_x <- data[, 2:ncol(data), drop = FALSE]
-  
-  return(list(y = matrix(c(data_y), ncol = 1), x = matrix(c(data_x), ncol = ncol(data) - 1)))
-}
-
 
 ##Scripts for studies  
 
@@ -392,7 +358,7 @@ Kim_etal_eye_replication <- function(){
 
 }
 
-simstud1 <- function(dist){
+simstud1 <- function(){
 
   load('eye.rda')
   load('bodyFat.rda')
@@ -441,13 +407,7 @@ simstud1 <- function(dist){
           temp_data <- vector('list', n_reps)
           
           for (l in 1:n_reps){
-            if (dist == 'normal'){
-              sample <- generate_sample(n[j], mv, cm, rho[i])
-            }else if (dist == 'skewed'){
-               sample <- generate_sample_skewed(n[j], mv, cm, rho[i], skew)
-            }else{
-              stop('dist must be "normal" or "skewed"')
-            }
+            sample <- generate_sample(n[j], mv, cm, rho[i])
             temp_data[[l]] <- evaluator(sample[[1]], sample[[2]], predictor[k])
             
           }
@@ -495,7 +455,7 @@ simstud1 <- function(dist){
   
 }
 
-simstud2 <- function(dist){
+simstud2 <- function(){
 
   load('eye.rda')
   load('bodyFat.rda')
@@ -547,13 +507,7 @@ simstud2 <- function(dist){
           mse <- vector('list', n_reps)
           ten_fold <- vector('list', n_reps)
           for (l in 1:n_reps){
-            if (dist == 'normal'){
-              sample <- generate_sample(n[j], mv, cm, rho[i])
-            }else if (dist == 'skewed'){
-               sample <- generate_sample_skewed(n[j], mv, cm, rho[i], skew)
-            }else{
-              stop('dist must be "normal" or "skewed"')
-            }
+            sample <- generate_sample(n[j], mv, cm, rho[i])
             error[[l]] <- t(as.vector(generate_error(sample$y, sample$x, predictor[k])))
             mse[[l]] <- evaluator(sample[[1]], sample[[2]], predictor[k])$mse
             ten_fold[[l]] <- evaluator_ten_fold(sample[[1]], sample[[2]], predictor[k])
@@ -606,7 +560,7 @@ real_data_analysis <- function(){
 
   real <- read.csv('real_data.csv')
   
-  par(mfrow = c(3, 2))
+  par(mfrow = c(1, 4))
 
   qqnorm(real$mGFR, main = 'Normal Q-Q Plot for mGFR')
   qqline(real$mGFR, col = "blue")
@@ -688,6 +642,6 @@ real_data_analysis <- function(){
 }
 
 #Kim_etal_eye_replication()
-#simstud1('skewed') #either 'normal' or 'skewed'
-#simstud2('skewed') #either 'normal' or 'skewed'
-real_data_analysis()
+#simstud1() 
+#simstud2() 
+#real_data_analysis()
