@@ -1,5 +1,7 @@
 library(MASS)
 library(sn)
+setwd('/Users/Hugo/Desktop/MALP-project-summer-2026/MALR project 2026/Writeup')
+set.seed(1)
 
 get_mean_vector <- function(y, x){ #takes two variables, y, and x, and creates a mean vector mew = [mew_y, mew_x]
   y_mean <- mean(y)
@@ -83,86 +85,49 @@ evaluator <- function(y, x, predictor){
   return(list(pcc = PCC, ccc = CCC, mse = MSE))
 }
 
-evaluator_five_fold <- function(y, x, predictor){
+evaluator_k_fold <- function(y, x, k){
   
   x <- as.matrix(x)
-  folds <- sample(rep(1:5, length.out = nrow(x)))
-  results <- vector('list', 5)
-  
-  for (i in 1:5){
-    train_y <- y[folds != i]
-    test_y <- y[folds == i]
-    train_x <- x[folds != i, drop = FALSE]
-    test_x  <- x[folds == i, drop = FALSE]
-    
-    if(predictor == 'malp'){
-      func <- MALP(train_y, train_x)
-    } else if(predictor == 'lslp'){
-      func <- LSLP(train_y, train_x)
-    } else{
-      stop('predictor must be malp or lslp')
-    }
-    
-    new_x <- as.matrix(test_x) %*% matrix(func$slope, ncol = 1) + func$intercept
-    
-    results[[i]] <- list (
-      PCC = pcc(test_y, new_x),
-      CCC = ccc(test_y, new_x),
-      MSE = mean((new_x - test_y)**2)
-    )
-  }
-  
-  mean_pcc <- mean(sapply(results, function(r) r$PCC))
-  mean_ccc <- mean(sapply(results, function(r) r$CCC))
-  mean_mse <- mean(sapply(results, function(r) r$MSE))
-  
-  return(list(pcc = mean_pcc, ccc = mean_ccc, mse = mean_mse))
-}
+  folds <- sample(rep(1:k, length.out = nrow(x)))  # computed ONCE, shared by both predictors
+  out <- list(malp = NULL, lslp = NULL)
 
-evaluator_ten_fold <- function(y, x, predictor){
-  
-  x <- as.matrix(x)
-  folds <- sample(rep(1:10, length.out = nrow(x)))
-  results <- vector('list', 10)
-  
-  for (i in 1:10){
-    train_y <- y[folds != i]
-    test_y <- y[folds == i]
-    train_x <- x[folds != i, , drop = FALSE]
-    test_x  <- x[folds == i, , drop = FALSE]
-    
-    if(predictor == 'malp'){
-      func <- MALP(train_y, train_x)
-      error <- generate_error(test_y, test_x, 'malp')
-    } else if(predictor == 'lslp'){
-      func <- LSLP(train_y, train_x)
-      error <- generate_error(test_y, test_x, 'lslp')
-    } else{
-      stop('predictor must be malp or lslp')
+
+  for (pred in c('malp', 'lslp')){
+    results <- vector('list', k)
+    for (i in 1:k){
+      train_y <- y[folds != i]
+      test_y <- y[folds == i]
+      train_x <- x[folds != i, , drop = FALSE]
+      test_x <- x[folds == i, , drop = FALSE]
+
+      if (pred == 'malp'){
+        func <- MALP(train_y, train_x)
+        error <- generate_error(test_y, test_x, 'malp')
+      } else if (pred == 'lslp'){
+        func <- LSLP(train_y, train_x)
+        error <- generate_error(test_y, test_x, 'lslp')
+      } else {
+        stop('predictor must be malp or lslp')
+      }
+
+      new_x <- as.matrix(test_x) %*% matrix(func$slope, ncol = 1) + func$intercept
+
+      n_error <- length(error)
+      iqr_error <- error[(ceiling(n_error/4) + 1):floor(3*n_error/4)]
+      oqr_error <- c(error[1:ceiling(n_error/4)], error[(floor(3*n_error/4) + 1):n_error])
+
+      results[[i]] <- c(
+        PCC = pcc(test_y, new_x),
+        CCC = ccc(test_y, new_x),
+        MSE = mean((new_x - test_y)**2),
+        MSE_IQ = mean(iqr_error),
+        MSE_OQ = mean(oqr_error)
+      )
     }
-    
-    new_x <- as.matrix(test_x) %*% matrix(func$slope, ncol = 1) + func$intercept
-    n_error <- length(error)
-    iqr_error <- error[(ceiling(n_error/4) + 1):floor(3*n_error/4)]
-    oqr_error <- c(error[1:ceiling(n_error/4)], error[(floor(3*n_error/4) + 1):n_error])
-    
-    
-    results[[i]] <- list (
-      PCC = pcc(test_y, new_x),
-      CCC = ccc(test_y, new_x),
-      MSE = mean((new_x - test_y)**2), 
-      MSE_IQ = mean(iqr_error), 
-      MSE_OQ = mean(oqr_error)
-    )
+    out[[pred]] <- colMeans(do.call(rbind, results))
   }
-  
-  mean_pcc <- mean(sapply(results, function(r) r$PCC))
-  mean_ccc <- mean(sapply(results, function(r) r$CCC))
-  mean_mse <- mean(sapply(results, function(r) r$MSE))
-  mean_mse_iq <- mean(sapply(results, function(r) r$MSE_IQ))
-  mean_mse_oq <- mean(sapply(results, function(r) r$MSE_OQ))
-  
-  return(list(pcc = mean_pcc, ccc = mean_ccc, mse = mean_mse, mse_iq = mean_mse_iq, mse_oq = mean_mse_oq))
+
+  return(out)
 }
 
 gen_interval <- function(y, x, type, predictor, alpha = 0.05){
@@ -317,19 +282,21 @@ Kim_etal_eye_replication <- function(){
   lslp_os_ill <- evaluator(y[eye$Eye == 'OS'], x[eye$Eye == 'OS'], 'lslp')
   malp_od_ill <- evaluator(y[eye$Eye == 'OD'], x[eye$Eye == 'OD'], 'malp')
   lslp_od_ill <- evaluator(y[eye$Eye == 'OD'], x[eye$Eye == 'OD'], 'lslp')
-  malp_os_5 <- evaluator_five_fold(y[eye$Eye == 'OS'], x[eye$Eye == 'OS'], 'malp')
-  lslp_os_5 <- evaluator_five_fold(y[eye$Eye == 'OS'], x[eye$Eye == 'OS'], 'lslp')
-  malp_od_5 <- evaluator_five_fold(y[eye$Eye == 'OD'], x[eye$Eye == 'OD'], 'malp')
-  lslp_od_5 <- evaluator_five_fold(y[eye$Eye == 'OD'], x[eye$Eye == 'OD'], 'lslp')
+  os_5 <- evaluator_k_fold(y[eye$Eye == 'OS'], x[eye$Eye == 'OS'], 5)
+  malp_os_5 <- os_5$malp
+  lslp_os_5 <- os_5$lslp
+  od_5 <- evaluator_k_fold(y[eye$Eye == 'OD'], x[eye$Eye == 'OD'], 5)
+  malp_od_5 <- od_5$malp
+  lslp_od_5 <- od_5$lslp
 
   data <- rbind(data, data.frame(pcc = lslp_os_ill$pcc, ccc = lslp_os_ill$ccc, mse = lslp_os_ill$mse, predictor = 'lslp', eye = 'os', type = 'illustrative'))
   data <- rbind(data, data.frame(pcc = malp_os_ill$pcc, ccc = malp_os_ill$ccc, mse = malp_os_ill$mse, predictor = 'malp', eye = 'os', type = 'illustrative'))
   data <- rbind(data, data.frame(pcc = lslp_od_ill$pcc, ccc = lslp_od_ill$ccc, mse = lslp_od_ill$mse, predictor = 'lslp', eye = 'od', type = 'illustrative'))
   data <- rbind(data, data.frame(pcc = malp_od_ill$pcc, ccc = malp_od_ill$ccc, mse = malp_od_ill$mse, predictor = 'malp', eye = 'od', type = 'illustrative'))
-  data <- rbind(data, data.frame(pcc = lslp_os_5$pcc, ccc = lslp_os_5$ccc, mse = lslp_os_5$mse, predictor = 'lslp', eye = 'os', type = 'five fold'))
-  data <- rbind(data, data.frame(pcc = malp_os_5$pcc, ccc = malp_os_5$ccc, mse = malp_os_5$mse, predictor = 'malp', eye = 'os', type = 'five fold'))
-  data <- rbind(data, data.frame(pcc = lslp_od_5$pcc, ccc = lslp_od_5$ccc, mse = lslp_od_5$mse, predictor = 'lslp', eye = 'od', type = 'five fold'))
-  data <- rbind(data, data.frame(pcc = malp_od_5$pcc, ccc = malp_od_5$ccc, mse = malp_od_5$mse, predictor = 'malp', eye = 'od', type = 'five fold'))
+  data <- rbind(data, data.frame(pcc = lslp_os_5[['PCC']], ccc = lslp_os_5[['CCC']], mse = lslp_os_5[['MSE']], predictor = 'lslp', eye = 'os', type = 'five fold'))
+  data <- rbind(data, data.frame(pcc = malp_os_5[['PCC']], ccc = malp_os_5[['CCC']], mse = malp_os_5[['MSE']], predictor = 'malp', eye = 'os', type = 'five fold'))
+  data <- rbind(data, data.frame(pcc = lslp_od_5[['PCC']], ccc = lslp_od_5[['CCC']], mse = lslp_od_5[['MSE']], predictor = 'lslp', eye = 'od', type = 'five fold'))
+  data <- rbind(data, data.frame(pcc = malp_od_5[['PCC']], ccc = malp_od_5[['CCC']], mse = malp_od_5[['MSE']], predictor = 'malp', eye = 'od', type = 'five fold'))
 
   print(data)
 
@@ -403,7 +370,6 @@ simstud1 <- function(){
         
         for (k in 1:length(predictor)){
           n_reps <- 1000
-          skew <- 20
           temp_data <- vector('list', n_reps)
           
           for (l in 1:n_reps){
@@ -427,8 +393,6 @@ simstud1 <- function(){
     }
     
     print(sim_stud_data)
-    
-    ###plotting simulated data
     
     plot(x = NULL, type = 'o', main = paste('Simulation using ', data_name, ' metrics - CCC'), xlim = c(0.2, 1), ylim = c(0, 1), xlab = 'pcc', ylab = 'ccc')
     points(sim_stud_data$rho[sim_stud_data$predictor == 'lslp' & sim_stud_data$n == n[1]], sim_stud_data$ccc[sim_stud_data$predictor == 'lslp' & sim_stud_data$n == n[1]], type = 'b',lty = 3, col = 'red')
@@ -459,33 +423,31 @@ simstud2 <- function(){
 
   load('eye.rda')
   load('bodyFat.rda')
-  
-  data_raw <- vector('list', 2)
-  
+
+  data_raw <- vector('list', 4)
+
   y_1 <- eye$Stratus
   x_1 <- eye$Cirrus
   data_raw[[1]] <- list(y = y_1, x = x_1, name = 'eye data')
-  
+
   y_2 <- bodyFat$PBF
   x_2 <- as.matrix(subset(bodyFat, select = c(Age)))
   data_raw[[2]] <- list(y = y_2, x = x_2, name = 'body fat data p = 1')
-  
+
   y_3 <- bodyFat$PBF
   x_3 <- as.matrix(subset(bodyFat, select = c(Age, WGT, HGT)))
   data_raw[[3]] <- list(y = y_3, x = x_3, name = 'body fat data p = 3')
-  
+
   y_4 <- bodyFat$PBF
   x_4 <- as.matrix(subset(bodyFat, select = c(Age, WGT, HGT, NCK, CST)))
   data_raw[[4]] <- list(y = y_4, x = x_4, name = 'body fat data p = 5')
   #start data collection based on mv, cm, rho, n
-  
+
   par(mfrow = c(3, 3))
   rho <- c(0.6, 0.75, 0.9)
   n <- c(100, 300, 1000)
   predictor <- c('lslp', 'malp')
-  
-  
-  #for (h in 1:length(data_raw)){
+
   for (h in 4:4){
     y <- data_raw[[h]]$y
     x <- data_raw[[h]]$x
@@ -494,24 +456,25 @@ simstud2 <- function(){
     cm <- get_cov_matrix(y, x)
     print(data_name)
     sim_stud_data <- data.frame()
-    
+
     for (i in 1:length(rho)){
-      
+
       for(j in 1:length(n)){
         results <- list()
+        n_reps <- 10000
+        kfold <- vector('list', n_reps)
 
         for (k in 1:length(predictor)){
-          n_reps <- 10000
-          skew <- 20
           error <- vector('list', n_reps)
           mse <- vector('list', n_reps)
-          ten_fold <- vector('list', n_reps)
+
           for (l in 1:n_reps){
-            sample <- generate_sample(n[j], mv, cm, rho[i])
-            error[[l]] <- t(as.vector(generate_error(sample$y, sample$x, predictor[k])))
-            mse[[l]] <- evaluator(sample[[1]], sample[[2]], predictor[k])$mse
-            ten_fold[[l]] <- evaluator_ten_fold(sample[[1]], sample[[2]], predictor[k])
+            draw <- generate_sample(n[j], mv, cm, rho[i])
+            kfold[[l]] <- evaluator_k_fold(draw$y, draw$x, 10)
+            error[[l]] <- t(as.vector(generate_error(draw$y, draw$x, predictor[k])))
+            mse[[l]] <- evaluator(draw$y, draw$x, predictor[k])$mse
           }
+
           error <- do.call(rbind, error)
           avg_error <- colMeans(error)
           n_error <- length(avg_error)
@@ -522,38 +485,37 @@ simstud2 <- function(){
           avg_iqr_error <- mean(sapply(iqr_error, function(x) x))
           avg_oqr_error <- mean(sapply(oqr_error, function(x) x))
 
-          ten_fold_mse <- mean(sapply(ten_fold, function(x) x$mse))
-          ten_fold_iqr <- mean(sapply(ten_fold, function(x) x$mse_iq))
-          ten_fold_oqr <- mean(sapply(ten_fold, function(x) x$mse_oq))
-
+          ten_fold_mse <- mean(sapply(kfold, function(x) x[[predictor[k]]][['MSE']]))
+          ten_fold_iqr <- mean(sapply(kfold, function(x) x[[predictor[k]]][['MSE_IQ']]))
+          ten_fold_oqr <- mean(sapply(kfold, function(x) x[[predictor[k]]][['MSE_OQ']]))
 
           results[[predictor[k]]] <- avg_error
 
           sim_stud_data <- rbind(sim_stud_data, data.frame(
-            predictor = predictor[k], 
-            rho = rho[i], 
+            predictor = predictor[k],
+            rho = rho[i],
             n = n[j],
             mse = avg_mse,
             iqr_error = avg_iqr_error,
-            oqr_error = avg_oqr_error,     
-            ten_mse = ten_fold_mse, 
-            ten_iqr = ten_fold_iqr, 
+            oqr_error = avg_oqr_error,
+            ten_mse = ten_fold_mse,
+            ten_iqr = ten_fold_iqr,
             ten_oqr = ten_fold_oqr
-            ))
+          ))
         }
 
-      vec <- 1:length(results[['lslp']])
-      plot(x = NULL, type = 'o', main = paste(data_name, ', rho =', rho[i], ', n =', n[j], ', ', dist), xlim = c(1, length(vec)), ylim = range(c(results[['lslp']], results[['malp']])), xlab = 'index of predictand, in order', ylab = 'error')
-      points(vec, results[['lslp']], type = 'b', lty = 1, col = 'red')
-      points(vec, results[['malp']], type = 'b', lty = 1, col = 'blue')
+        vec <- 1:length(results[['lslp']])
+        plot(x = NULL, type = 'o', main = paste(data_name, ', rho =', rho[i], ', n =', n[j]), xlim = c(1, length(vec)), ylim = range(c(results[['lslp']], results[['malp']])), xlab = 'index of predictand, in order', ylab = 'error')
+        points(vec, results[['lslp']], type = 'b', lty = 1, col = 'red')
+        points(vec, results[['malp']], type = 'b', lty = 1, col = 'blue')
       }
     }
-    
+
     options(width = 200)
     print(sim_stud_data)
-    
+
   }
-  
+
 }
 
 real_data_analysis <- function(){
@@ -576,8 +538,6 @@ real_data_analysis <- function(){
 
 
   data_raw <- vector('list', 2)
-  
-  set.seed(1)
 
   y_1 <- real$mGFR
   x_1 <- real$cystatinC
@@ -594,10 +554,10 @@ real_data_analysis <- function(){
   y_4 <- real$mGFR
   x_4 <- as.matrix(subset(real, select = c('creatinine', 'cystatinC', 'age')))
   data_raw[[4]] <- list(y = y_4, x = x_4, name = 'Creatinine, CystatinC, Age')
-
-  #start data collection based on mv, cm, rho, n
   
   predictor <- c('lslp', 'malp')
+  folds = 10
+  n_reps = 50
   
   analysed_data <- data.frame()
 
@@ -605,41 +565,43 @@ real_data_analysis <- function(){
     y <- data_raw[[i]]$y
     x <- data_raw[[i]]$x
     data_name <- data_raw[[i]]$name
-    
-    for (j in 1:length(predictor)){
-      ev_data <- evaluator(y, x, predictor[[j]])
-      error <- generate_error(y, x, predictor[[j]])
-      ten_fold_reps <- replicate(50, evaluator_ten_fold(y, x, predictor[[j]]), simplify = FALSE)
-      ten_mse <- mean(sapply(ten_fold_reps, function(r) r$mse))
-      ten_iqr <- mean(sapply(ten_fold_reps, function(r) r$mse_iq))
-      ten_oqr <- mean(sapply(ten_fold_reps, function(r) r$mse_oq))
 
-      n_error <- length(error)
+    cv <- list(lslp = vector('list', n_reps), malp = vector('list', n_reps))
+
+    for (r in 1:n_reps) {
+      rep_cv <- evaluator_k_fold(y, x, 10)
+      cv[['lslp']][[r]] <- rep_cv[['lslp']]
+      cv[['malp']][[r]] <- rep_cv[['malp']]
+    }
+
+    for (p in predictor){
+      ev_data <- evaluator(y, x, p)
+      error   <- generate_error(y, x, p)
+
+      n_error   <- length(error)
       iqr_errors <- error[(ceiling(n_error/4) + 1):floor(3*n_error/4)]
-      oqr_errors <- c(error[1:ceiling(n_error/4)], error[(floor(3*n_error/4) + 1):n_error])
+      oqr_errors <- c(error[1:ceiling(n_error/4)],
+                      error[(floor(3*n_error/4) + 1):n_error])
 
-      mse_iq <- mean(sapply(iqr_errors, function(x) x))
-      mse_oq <- mean(sapply(oqr_errors, function(x) x))
-          
       analysed_data <- rbind(analysed_data, data.frame(
-        predictor = predictor[j], 
-        pcc = ev_data$pcc, 
-        ccc = ev_data$ccc, 
-        mse = ev_data$mse,
-        mse_iq = mse_iq,
-        mse_oq = mse_oq,
-        ten_mse = ten_mse, 
-        ten_iqr = ten_iqr, 
-        ten_oqr = ten_oqr, 
-        prediction_data = data_name 
-        ))
-        }
-      }
-
-    options(width = 200)
-    print(analysed_data)
-
+        prediction_data = data_name,
+        predictor = p,
+        pcc     = ev_data$pcc,
+        ccc     = ev_data$ccc,
+        mse     = ev_data$mse,
+        mse_iq  = mean(iqr_errors),
+        mse_oq  = mean(oqr_errors),
+        ten_mse = mean(sapply(cv[[p]], function(r) as.numeric(r[['MSE']]))),
+        ten_iqr = mean(sapply(cv[[p]], function(r) as.numeric(r[['MSE_IQ']]))),
+        ten_oqr = mean(sapply(cv[[p]], function(r) as.numeric(r[['MSE_OQ']])))
+      ))
+    }
+  }
+  
+  options(width = 200)
+  print(analysed_data, digits = 5)
 }
+
 
 #Kim_etal_eye_replication()
 #simstud1() 
