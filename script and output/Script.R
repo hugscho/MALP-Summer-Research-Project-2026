@@ -1,6 +1,5 @@
 library(MASS)
 library(sn)
-setwd('/Users/Hugo/Desktop/MALP-project-summer-2026/MALR project 2026/Writeup')
 set.seed(1)
 
 get_mean_vector <- function(y, x){ #takes two variables, y, and x, and creates a mean vector mew = [mew_y, mew_x]
