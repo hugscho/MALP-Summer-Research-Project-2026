@@ -87,7 +87,7 @@ evaluator <- function(y, x, predictor){
 evaluator_k_fold <- function(y, x, k){
   
   x <- as.matrix(x)
-  folds <- sample(rep(1:k, length.out = nrow(x)))  # computed ONCE, shared by both predictors
+  folds <- sample(rep(1:k, length.out = nrow(x)))  
   out <- list(malp = NULL, lslp = NULL)
 
 
@@ -346,7 +346,6 @@ simstud1 <- function(){
   y_4 <- bodyFat$PBF
   x_4 <- as.matrix(subset(bodyFat, select = c(Age, WGT, HGT, NCK, CST)))
   data_raw[[4]] <- list(y = y_4, x = x_4, name = 'body fat data, p = 5')
-  #start data collection based on mv, cm, rho, n
   
   par(mfrow = c(4, 2))
   rho <- c(0.3, 0.5, 0.7, 0.9, 0.95)
@@ -440,7 +439,6 @@ simstud2 <- function(){
   y_4 <- bodyFat$PBF
   x_4 <- as.matrix(subset(bodyFat, select = c(Age, WGT, HGT, NCK, CST)))
   data_raw[[4]] <- list(y = y_4, x = x_4, name = 'body fat data p = 5')
-  #start data collection based on mv, cm, rho, n
 
   par(mfrow = c(3, 3))
   rho <- c(0.6, 0.75, 0.9)
